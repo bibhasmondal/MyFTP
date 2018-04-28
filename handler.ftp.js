@@ -11,7 +11,21 @@ class FTP {
             '</div>' +
             '<div id="ftpDownload" style="top:25px;transition:0.5s;width:350px;height:0px;overflow:auto;position:absolute;background-color:#e0e0de;right:0;border-radius:5px">' +
             '</div>' +
-            '<div id="ftpContent" style="height:100%" class="container-fluid">' +
+            '<div id="ftpContent" style="height:100%" class="col-sm-12">' +
+            '<div id="ftpHeader"></div>'+
+
+            '<table style="width:100%">'+
+                '<thead style="background-color:yellow">'+
+                    '<tr id="theader">'+
+                        '<th style="width:70%" onclick="javascript:sortTable(0);"><b style="font-size:20px">Name</b></th>'+
+                        '<th style="width:10%" onclick="javascript:sortTable(1);">Size</th>'+
+                        '<th style="width:20%" onclick="javascript:sortTable(2);">Last Modified</th>'+
+                    '</tr>'+
+                '</thead>'+
+                '<tbody id="tbody">'+
+                '</tbody>'+
+            '</table>'+
+
             '</div>'+
             '<menu type = "context" id = "mymenu">'+
             '<menuitem label="Refresh" onclick="window.location.reload();" icon="ico_reload.png"></menuitem>'+
@@ -75,6 +89,7 @@ class FTP {
         if (contentType == 'up') {
             this.parentPath.pop();
         }
+        console.log(this.parentPath);
         if (typeof this.parentPath[this.parentPath.length - 2] !== 'undefined') {
             parentPath = this.parentPath[this.parentPath.length - 2];
         }
@@ -95,10 +110,10 @@ class FTP {
         ws.onopen = function (e) {
             newPage = true;
             ws.send(path)
-            console.log(e)
+            //console.log(e)
         };
         ws.onmessage = function (e) {
-            if ( /*JSON.parse(e.data).*/contentType == 'file') {
+            if (contentType == 'file') {
                 if (JSON.parse(e.data).message == 'start') {
                     startTime = new Date().getTime()
                     fileSize = JSON.parse(e.data).fileSize
@@ -126,21 +141,22 @@ class FTP {
                     $('#' + fileId).html(downloadHTML(currentDownloaded, Math.round(speed)));
                 }
             }
-            if (/*JSON.parse(e.data).*/contentType == /*folder*/'dir' || contentType=='up') {
+            if (contentType == 'dir' || contentType=='up') {
                 if (newPage) {
                     newPage = false;
-                    $('#ftpContent').html('<h1 style="margin-top:-20px">Index of ' + path + '</h1><hr><div class="col-sm-12 row" style="margin-top:-10px;margin-bottom:10px"><a class="up" contextmenu="mymenu" style="padding-left:20px" href="' + parentPath + '">[parent directory]</a></div>');
+                    $('#tbody').html('');
+                    $('#ftpHeader').html('<h1 style="margin-top:-20px"><b>Index of ' + path + '</b></h1><div class="col-sm-12 row" style="padding-bottom:20px"><b><a class="up" contextmenu="mymenu" style="padding-left:20px" href="' + parentPath + '">[parent directory]</a></b></div>');
                 }
-                $('#ftpContent').append('<a class="' + JSON.parse(e.data).class + '" contextmenu="mymenu" style="padding-left:20px" href="' + path + '/' + JSON.parse(e.data).message + '">' + JSON.parse(e.data).message + '</a><br>');
+                $('#tbody').append('<tr><th style="width:70%"><a class="' + JSON.parse(e.data).class + '" contextmenu="mymenu" style="padding-left:20px" href="' + path + '/' + JSON.parse(e.data).message + '">' + JSON.parse(e.data).message + '</a></th><th style="width:10%">' + JSON.parse(e.data).size + '</th><th style="width:20%">' + JSON.parse(e.data).lastModified +'</th>');
 
             }
-            console.log(e);
+            //console.log(e);
         };
         ws.onclose = function (e) {
-            console.log(e);
+            //console.log(e);
         };
         ws.onerror = function (e) {
-            console.log(e);
+            //console.log(e);
         };
     }
 }
