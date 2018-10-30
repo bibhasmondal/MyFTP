@@ -9,17 +9,17 @@ class FTP {
             '<i class="material-icons" style="font-size:20px">file_download</i>' +
             '</a>' +
             '</div>' +
-            '<div id="ftpDownload" style="top:25px;transition:0.5s;width:350px;height:0px;overflow:auto;position:absolute;background-color:#e0e0de;right:0;border-radius:5px">' +
+            '<div id="ftpDownload" style="z-index:2;top:25px;transition:0.5s;width:350px;height:0px;overflow:auto;position:absolute;background-color:rgba(0,0,0,0.5);right:0;border-radius:5px">' +
             '</div>' +
             '<div id="ftpContent" style="height:100%" class="col-sm-12">' +
             '<div id="ftpHeader"></div>'+
 
             '<table style="width:100%">'+
-                '<thead style="background-color:yellow">'+
+                '<thead style="background-color:rgba(0,0,0,0.5)">'+
                     '<tr id="theader">'+
-                        '<th style="width:70%" onclick="javascript:sortTable(0);"><b style="font-size:20px">Name</b></th>'+
-                        '<th style="width:10%" onclick="javascript:sortTable(1);">Size</th>'+
-                        '<th style="width:20%" onclick="javascript:sortTable(2);">Last Modified</th>'+
+                        '<th style="width:70%"><b style="font-size:20px">Name</b></th>'+
+                        '<th style="width:10%"><b style="font-size:20px">Size</b></th>'+
+                        '<th style="width:20%"><b style="font-size:20px">Last Modified</b></th>'+
                     '</tr>'+
                 '</thead>'+
                 '<tbody id="tbody">'+
@@ -34,54 +34,57 @@ class FTP {
                 '<menuitem label="Facebook" icon="ico_facebook.png" onclick="window.open("//facebook.com/sharer/sharer.php?u="' + window.location.href+'");"></menuitem>'+
             '</menu>'+
             '</menu>');
-        $('#downloadButton').click(function () {
-            if (ftpDownload.style.height == "0px") {
+        $('#downloadButton,#ftpContent').click(function (e) {
+            if (ftpDownload.style.height == "0px" && $(e.target).parents('a').attr('id')=='downloadButton') {
                 ftpDownload.style.height = "450px";
             }
             else {
                 ftpDownload.style.height = "0px"
             }
-        });        
+        });  
     }
-    getContent(path,contentType) {        
-        function downloadHTML(value, speed) {
-            var html = '<div class = "progress" style="margin-bottom:10px">'
-            if (speed) {
-                if (speed >= 1024) {
-                    html += '<label style="position:absolute;color:black;left:15px">' + (speed / 1024).toFixed(2) + ' Mbps</label>'
-                } else {
-                    html += '<label style="position:absolute;color:black;left:15px">' + speed + ' Kbps</label>'
-                }
+
+    b64ToUint8Array(b64Data) {
+        var byteSlice = atob(b64Data);
+        var byteNumbers = new Array(byteSlice.length);
+        for (var i = 0; i < byteSlice.length; i++) {
+            byteNumbers[i] = byteSlice.charCodeAt(i);
+        }
+        return new Uint8Array(byteNumbers);
+    }
+
+    destroyClickedElement(event) {
+        document.body.removeChild(event.target);
+    }
+
+    saveAsFile(url, fileName) {
+        var downloadLink = document.createElement('a');
+        downloadLink.download = fileName;
+        downloadLink.innerHTML = fileName;
+        downloadLink.href = url;
+        downloadLink.onclick = this.destroyClickedElement;
+        downloadLink.style.display = "none";
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+    }
+
+    downloadHTML(value, speed) {
+        var html = '<div class = "progress" style="margin-bottom:10px">'
+        if (speed) {
+            if (speed >= 1024) {
+                html += '<label style="position:absolute;color:black;left:15px">' + (speed / 1024).toFixed(2) + ' Mbps</label>'
+            } else {
+                html += '<label style="position:absolute;color:black;left:15px">' + speed + ' Kbps</label>'
             }
-            html += '<label style="position:absolute;color:black;right:15px">' + value + '%</label>' +
-                '<div class = "progress-bar" role = "progressbar" aria-valuenow = "' + value + '" aria-valuemin = "0" aria-valuemax = "100" style = "width:' + value + '%">' +
-                '</div>' +
-                '</div>'
-            return html;
         }
-        function b64ToUint8Array(b64Data) {
-            var byteSlice = atob(b64Data);
-            chunkSize = byteSlice.length;
-            var byteNumbers = new Array(byteSlice.length);
-            for (var i = 0; i < byteSlice.length; i++) {
-                byteNumbers[i] = byteSlice.charCodeAt(i);
-            }
-            return new Uint8Array(byteNumbers);
-        }
-        function destroyClickedElement(event) {
-            document.body.removeChild(event.target);
-        }
-        function saveAsFile(url, fileName) {
-            var downloadLink = document.createElement('a');
-            downloadLink.download = fileName;
-            downloadLink.innerHTML = fileName;
-            downloadLink.href = url;
-            downloadLink.onclick = destroyClickedElement;
-            downloadLink.style.display = "none";
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-        }
-        
+        html += '<label style="position:absolute;color:black;right:15px">' + value + '%</label>' +
+            '<div class = "progress-bar" role = "progressbar" aria-valuenow = "' + value + '" aria-valuemin = "0" aria-valuemax = "100" style = "width:' + value + '%">' +
+            '</div>' +
+            '</div>'
+        return html;
+    }
+    
+    getContent(path,contentType) {
         var parentPath;
         if (contentType =='dir'){
             this.parentPath.push(path);
@@ -89,7 +92,7 @@ class FTP {
         if (contentType == 'up') {
             this.parentPath.pop();
         }
-        console.log(this.parentPath);
+        // console.log(this.parentPath);
         if (typeof this.parentPath[this.parentPath.length - 2] !== 'undefined') {
             parentPath = this.parentPath[this.parentPath.length - 2];
         }
@@ -98,12 +101,12 @@ class FTP {
         }
         var byteArrays = [];
         var fileSize;
+        var chunkSize;
         var fileName;
         var fileId;
         var startTime;
         var endTime;
         var speed;
-        var chunkSize;
         var newPage;
         var currentDownloaded;
         var ws = new WebSocket(this.url);
@@ -112,33 +115,34 @@ class FTP {
             ws.send(path)
             //console.log(e)
         };
-        ws.onmessage = function (e) {
+        ws.onmessage = (e)=>{
             if (contentType == 'file') {
                 if (JSON.parse(e.data).message == 'start') {
                     startTime = new Date().getTime()
                     fileSize = JSON.parse(e.data).fileSize
                     fileName = JSON.parse(e.data).fileName
                     fileId = JSON.parse(e.data).fileId
-                    $('#ftpDownload').append('<label style="padding-left:10px;font-size:15px">' + fileName + '</label><div id="' + fileId + '" class="container-fluid">' + downloadHTML(0) + '</div>');
+                    $('#ftpDownload').append('<label style="padding-left:10px;font-size:15px;color:white">' + fileName + '</label><div id="' + fileId + '" class="container-fluid">' + this.downloadHTML(0) + '</div>');
                 }
                 else if (JSON.parse(e.data).message == 'finish') {
                     var file = new File(byteArrays, fileName, { type: JSON.parse(e.data).mime, lastModified: Date.now() });
                     if (JSON.parse(e.data).isReadable) {
                         window.open(URL.createObjectURL(file));
-                        //$('#ftpContent').html('<iframe frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;height:100%;width:100%;position:absolute;top:30px;left:0px;right:0px;bottom:0px" height="100%" width="100%" src="' + URL.createObjectURL(file) + '"></iframe>');
+                        $('#ftpContent').html('<iframe frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;height:100%;width:100%;position:absolute;top:30px;left:0px;right:0px;bottom:0px" height="100%" width="100%" src="' + URL.createObjectURL(file) + '"></iframe>');
                     }
                     else {
-                        //saveAsFile(URL.createObjectURL(file), JSON.parse(e.data).fileName);
+                        this.saveAsFile(URL.createObjectURL(file), JSON.parse(e.data).fileName);
                     }
                     ws.close()
                 }
                 else {
-                    byteArrays.push(b64ToUint8Array(JSON.parse(e.data).message));
+                    byteArrays.push(this.b64ToUint8Array(JSON.parse(e.data).message));
+                    chunkSize = byteArrays[byteArrays.length - 1].length
                     currentDownloaded = JSON.parse(e.data).currentDownloaded
                     endTime = new Date().getTime()
                     speed = (chunkSize / 1024) / ((endTime - startTime) / 1000)
                     startTime = endTime
-                    $('#' + fileId).html(downloadHTML(currentDownloaded, Math.round(speed)));
+                    $('#' + fileId).html(this.downloadHTML(currentDownloaded, Math.round(speed)));
                 }
             }
             if (contentType == 'dir' || contentType=='up') {

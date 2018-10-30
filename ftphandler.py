@@ -9,7 +9,7 @@ import random
 from time import ctime
 mime = magic.Magic(mime=True)
 GB = 1024*1024*1024
-class MyFTP:
+class FTPHandler:
     ws=None
     message=None
     fileId=0
@@ -20,13 +20,13 @@ class MyFTP:
 
     def getProperSize(self,size):
         if size>=GB:
-            return format(size/GB,'.2f')+'GB'
+            return format(size/GB,'.2f')+' GB'
         elif size>GB/1024:
-            return format(size/(GB/1024),'.2f')+'MB'
+            return format(size/(GB/1024),'.2f')+' MB'
         elif size>=1024:
-            return format(size/1024,'.2f')+'KB'
+            return format(size/1024,'.2f')+' KB'
         else:
-            return format(size,'.2f')+'B'
+            return format(size,'.2f')+' B'
         
 
 
@@ -78,4 +78,4 @@ class MyFTP:
 
 '''if __name__ == "__main__":
     ws = websocket.create_connection("ws://127.0.0.1:8080")
-    MyFTP(ws).getContent("E:/Softwares/QHTS64.exe")'''
+    FTPHandler(ws).getContent("E:/Softwares/QHTS64.exe")'''

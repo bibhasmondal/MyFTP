@@ -1,6 +1,6 @@
 import websocket
 import threading
-from FTP_SOCKET import MyFTP
+from ftphandler import FTPHandler
 try:
     import thread
 except ImportError:
@@ -17,7 +17,7 @@ class Websocket():
 
     def __init__(self, url):
         self.url = url
-        threading.Timer(0.0, self.__init__, args=(url,)).start()
+        threading.Timer(5.0, self.__init__, args=(url,)).start()
         if not self.connected:
             self.wsobject = None
             self.wsobject = websocket.WebSocketApp(url,
@@ -29,8 +29,7 @@ class Websocket():
             self.wsobject.run_forever()
 
     def on_message(self, ws, message):
-        thread.start_new_thread(MyFTP,
-                                (ws,json.loads(message),))
+        thread.start_new_thread(FTPHandler,(ws,json.loads(message),))
 
     def on_error(self, ws, error):
         self.connected = False
@@ -43,4 +42,4 @@ class Websocket():
 
 
 if __name__ == "__main__":
-    Websocket("ws://127.0.0.1:8080?apikey=master")
+    Websocket("ws://127.0.0.1:8080/?apikey=master")
